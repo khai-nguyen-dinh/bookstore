@@ -1,0 +1,52 @@
+version: "2"
+services:
+  postgre:
+      image: postgres
+      volumes:
+          # Mount the DB dumps folder into the container, to be able to create & access database dumps:
+          - ./db/dumps:/db/dumps
+          # Mount out tmp folder, we might want to have access to something there during development:
+          - ./tmp:/tmp
+          # Mount our 'restoredb' script:
+          - ./bin/restoredb:/bin/restoredb:ro
+          # Mount our 'dumpdb' script:
+          - ./bin/dumpdb:/bin/dumpdb:ro
+          # We'll mount the 'postgres-data' volume into the location Postgres stores it's data:
+          - ./postgres-data:/var/lib/postgresql/data
+      environment:
+          - POSTGRES_PASSWORD=nguyendinhkhai
+          - POSTGRES_USER=bookstore
+          - POSTGRES_DB=bookstore
+      ports:
+          - "5432:5432"
+      networks:
+          - book-tier
+      hostname: postgre
+      cpu_shares: 512
+      mem_limit: 1073741824
+      logging:
+        driver: "json-file"
+        options:
+            max-size: "100M"
+            max-file: "3"
+
+  django:
+      image: khainguyendinh/django:1.0
+      ports:
+          - "8000:8000"
+      volumes:
+          - ./:/bookstore/
+      networks:
+          - book-tier
+      hostname: django
+      cpu_shares: 512
+      mem_limit: 1073741824
+      tty: true
+      logging:
+        driver: "json-file"
+        options:
+            max-size: "100M"
+            max-file: "3"
+
+networks:
+  book-tier:
